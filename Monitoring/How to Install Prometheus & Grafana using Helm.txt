@@ -1,0 +1,56 @@
+Installing Helm
+
+The Helm project provides binaries and scripts to fetch and install Helm. These are the official methods to get Helm releases. In addition to that, the Helm community also provides methods to install Helm through different package managers. Installation through those methods can be found on the official website of helm(https://helm.sh/docs/intro/install/). We have covered binary installation in the steps mentioned below.
+
+Download the desired version from Helm’s GitHub repository based on the OS. In this example, we have used the Windows operating system.
+Unzip the downloaded file (helm-v3.9.0-rc.1-windows-amd64.zip) and copy the helm binary in any folder and then add the folder path in the environment path variable. Once done, we are good to use Helm.
+Installing Prometheus and Grafana
+
+Go to the following repo, https://artifacthub.io/ .
+Look for official charts for Prometheus and Grafana and the repositories into the helm repo using the following commands:
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+helm repo add grafana https://grafana.github.io/helm-charts
+
+helm repo update
+
+Next, we need to install Prometheus using the following command:
+helm install prometheus prometheus-community/prometheus
+
+It will install all the required components of the Prometheus system with a single command. Without Helm Charts we would have to write the manifest file ourselves.
+
+We can expose the prometheus-server service to the internet using nodeport but the GUI provided by prometheus is not as good as the one provided by Grafana. We can use the following command for the same:
+kubectl expose service prometheus-server — type=NodePort — target-port=9090 — name=prometheus-server-ext
+
+minikube service prometheus-server-ext
+
+We can install Grafana using the following command:
+helm install grafana grafana/grafana
+
+It will create the following components on the cluster for Grafana:
+
+We can expose Grafana service to the external world using the following commands:
+kubectl expose service grafana — type=NodePort — target-port=3000 — name=grafana-ext
+
+minikube service grafana-ext
+
+We can find the username and password required to log in into Grafana using the following commands. It will show the values in encrypted format, which we can decode using OpenSSL and base 64 formats.
+kubectl get secret — namespace default grafana -o yaml
+
+echo “password_value” | openssl base64 -d ; echo
+
+echo “username_value” | openssl base64 -d ; echo
+
+Add prometheus data source into Grafana dashboard
+
+Login into the Grafana dashboard using the admin user and password generated in the previous step.
+In the add data source section, provide the service URL generated for prometheus-server-ext after installation and save it.
+
+Next, we need to create a new dashboard. We can either create a dashboard from scratch or import the dashboards available for Prometheus on grafana.com. For the simplicity of this article, we are using a dashboard available on grafana.com numbered “3662”. Add the dashboard number and hit load.
+
+On the next screen add the data source for this dashboard which is Prometheus in our case and hit import.
+
+We will have a beautiful dashboard ready for us which we can modify according to our requirements.
+Conclusion
+
+We can see that through the use of helm charts, it is effortless to set up Prometheus and Grafana monitoring on the Kubernetes cluster as compared to the manual deployments done through Kubernetes yaml files.
